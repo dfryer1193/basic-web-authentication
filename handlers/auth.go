@@ -2,13 +2,23 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/dfryer1193/basic-web-authentication/models"
+	"github.com/dfryer1193/basic-web-authentication/storage"
+	"github.com/dfryer1193/basic-web-authentication/utils"
 	"net/http"
 )
 
-var userStore = storage.NewInMemoryUserStore()
+type UserAwareHandler struct {
+	userStore storage.UserStore
+}
+
+// NewUserAwareHandler initializes and returns a UserAwareHandler with the provided UserStore dependency.
+func NewUserAwareHandler(userStore storage.UserStore) UserAwareHandler {
+	return UserAwareHandler{userStore: userStore}
+}
 
 // LoginHandler handles user login
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
+func (handler UserAwareHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
 		return
@@ -20,7 +30,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := userStore.Get(credentials.Username)
+	user, ok := handler.userStore.Get(credentials.Username)
 	if !ok || !utils.CheckPasswordHash(credentials.Password, user.PasswordHash) {
 		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
 		return
@@ -33,7 +43,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // RegisterHandler handles user registration
-func RegisterHandler(w http.ResponseWriter, r *http.Request) {
+func (handler UserAwareHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
 		return
@@ -51,7 +61,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userStore.Set(credentials.Username, models.User{
+	handler.userStore.Set(credentials.Username, models.User{
 		Username:     credentials.Username,
 		PasswordHash: hash,
 	})

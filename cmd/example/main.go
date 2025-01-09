@@ -2,13 +2,17 @@ package main
 
 import (
 	"github.com/dfryer1193/basic-web-authentication/handlers"
+	"github.com/dfryer1193/basic-web-authentication/storage"
 	"log"
 	"net/http"
 )
 
 func main() {
-	http.HandleFunc("/register", handlers.RegisterHandler)
-	http.HandleFunc("/login", handlers.LoginHandler)
+	userStore := storage.NewInMemoryUserStore()
+	authHandler := handlers.NewUserAwareHandler(userStore)
+
+	http.HandleFunc("/register", authHandler.RegisterHandler)
+	http.HandleFunc("/login", authHandler.LoginHandler)
 	http.HandleFunc("/welcome", handlers.WelcomeHandler)
 
 	// Serve static files
