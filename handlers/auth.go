@@ -9,15 +9,19 @@ import (
 )
 
 type UserAwareHandler struct {
-	userStore storage.UserStore
+	cookieName string
+	userStore  storage.UserStore
 }
 
 // NewUserAwareHandler initializes and returns a UserAwareHandler with the provided UserStore dependency.
-func NewUserAwareHandler(userStore storage.UserStore) UserAwareHandler {
-	return UserAwareHandler{userStore: userStore}
+func NewUserAwareHandler(cookieName string, userStore storage.UserStore) UserAwareHandler {
+	return UserAwareHandler{
+		cookieName: cookieName,
+		userStore:  userStore,
+	}
 }
 
-// LoginHandler handles user login
+// LoginHandler processes user login requests, validates credentials, and sets a session cookie for successful authentication.
 func (handler UserAwareHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
@@ -42,7 +46,7 @@ func (handler UserAwareHandler) LoginHandler(w http.ResponseWriter, r *http.Requ
 	w.Write([]byte("Login successful"))
 }
 
-// RegisterHandler handles user registration
+// RegisterHandler handles user registration by accepting credentials via a POST request, hashing the password, and storing the user.
 func (handler UserAwareHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
@@ -70,9 +74,9 @@ func (handler UserAwareHandler) RegisterHandler(w http.ResponseWriter, r *http.R
 	w.Write([]byte("User registered successfully"))
 }
 
-// WelcomeHandler handles welcome page
-func WelcomeHandler(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("session")
+// WelcomeHandler validates the user's session cookie and responds with a welcome message if the user is authenticated.
+func (handler UserAwareHandler) WelcomeHandler(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie(handler.cookieName)
 	if err != nil || cookie.Value == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return

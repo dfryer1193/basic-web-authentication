@@ -9,11 +9,11 @@ import (
 
 func main() {
 	userStore := storage.NewInMemoryUserStore()
-	authHandler := handlers.NewUserAwareHandler(userStore)
+	authHandler := handlers.NewUserAwareHandler("example", userStore)
 
 	http.HandleFunc("/register", authHandler.RegisterHandler)
 	http.HandleFunc("/login", authHandler.LoginHandler)
-	http.HandleFunc("/welcome", handlers.WelcomeHandler)
+	http.HandleFunc("/welcome", authHandler.WelcomeHandler)
 
 	// Serve static files
 	fs := http.FileServer(http.Dir("./web/static"))
