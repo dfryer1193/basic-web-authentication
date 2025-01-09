@@ -80,6 +80,45 @@ func (handler UserAwareHandler) RegisterHandler(w http.ResponseWriter, r *http.R
 	w.Write([]byte("User registered successfully"))
 }
 
+func (handler UserAwareHandler) PasswordUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	cookie, err := r.Cookie(handler.cookieName)
+	if err != nil || cookie.Value == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	user, exists := handler.userStore.Get(cookie.Value)
+	if !exists {
+		http.Error(w, "User does not exist", http.StatusNotFound)
+		return
+	}
+
+	var req struct {
+		NewPassword string `json:"newPassword"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	hash, err := utils.HashPassword(req.NewPassword)
+	if err != nil {
+		http.Error(w, "Error hashing req", http.StatusInternalServerError)
+		return
+	}
+
+	user.PasswordHash = hash
+	handler.userStore.Set(cookie.Value, user)
+
+	w.WriteHeader(http.StatusAccepted)
+	w.Write([]byte("User req updated successfully"))
+}
+
 // WelcomeHandler validates the user's session cookie and responds with a welcome message if the user is authenticated.
 func (handler UserAwareHandler) WelcomeHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(handler.cookieName)

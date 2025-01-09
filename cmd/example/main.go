@@ -13,6 +13,7 @@ func main() {
 
 	http.HandleFunc("/register", authHandler.RegisterHandler)
 	http.HandleFunc("/login", authHandler.LoginHandler)
+	http.HandleFunc("/change-password", authHandler.PasswordUpdateHandler)
 	http.HandleFunc("/welcome", authHandler.WelcomeHandler)
 
 	// Serve static files

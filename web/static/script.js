@@ -1,5 +1,7 @@
 const registerForm = document.getElementById('registerForm');
 const loginForm = document.getElementById('loginForm');
+const changePasswordForm = document.getElementById('changePasswordForm');
+const changePasswordMessage = document.getElementById('changePasswordMessage');
 const welcomeBtn = document.getElementById('welcomeBtn');
 const welcomeMessage = document.getElementById('welcomeMessage');
 
@@ -36,6 +38,26 @@ loginForm.addEventListener('submit', async (e) => {
     alert('Login successful');
   } else {
     alert('Invalid username or password');
+  }
+});
+
+changePasswordForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const newPassword = document.getElementById('newPassword').value;
+
+  const res = await fetch('/change-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ newPassword }),
+  });
+
+  if (res.ok) {
+    changePasswordMessage.textContent = 'Password changed successfully!';
+    changePasswordMessage.style.color = 'green';
+  } else {
+    const errorMessage = await res.text();
+    changePasswordMessage.textContent = `Error: ${errorMessage}`;
+    changePasswordMessage.style.color = 'red';
   }
 });
 
