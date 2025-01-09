@@ -24,7 +24,7 @@ func TestLoginHandler(t *testing.T) {
 	tests := []struct {
 		name         string
 		method       string
-		body         interface{}
+		body         any
 		wantStatus   int
 		wantResponse string
 	}{
@@ -103,7 +103,7 @@ func TestRegisterHandler(t *testing.T) {
 	tests := []struct {
 		name         string
 		method       string
-		body         interface{}
+		body         any
 		wantStatus   int
 		wantResponse string
 		setup        func()
