@@ -59,6 +59,12 @@ func (handler UserAwareHandler) RegisterHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	_, exists := handler.userStore.Get(credentials.Username)
+	if exists {
+		http.Error(w, "Username already exists", http.StatusBadRequest)
+		return
+	}
+
 	hash, err := utils.HashPassword(credentials.Password)
 	if err != nil {
 		http.Error(w, "Error hashing password", http.StatusInternalServerError)
