@@ -41,7 +41,7 @@ func (handler UserAwareHandler) LoginHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	// Authentication successful
-	http.SetCookie(w, &http.Cookie{Name: "session", Value: credentials.Username, Path: "/"})
+	http.SetCookie(w, &http.Cookie{Name: handler.cookieName, Value: credentials.Username, Path: "/"})
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Login successful"))
 }
