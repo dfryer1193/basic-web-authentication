@@ -178,3 +178,110 @@ func TestRegisterHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestPasswordUpdateHandler(t *testing.T) {
+	mockStore := storage.NewInMemoryUserStore()
+	handler := UserAwareHandler{cookieName: "auth-cookie", userStore: mockStore}
+
+	password := "securepassword"
+	passwordHash, _ := utils.HashPassword(password)
+	mockStore.Set("testuser", models.User{
+		Username:     "testuser",
+		PasswordHash: passwordHash,
+	})
+
+	tests := []struct {
+		name         string
+		method       string
+		cookie       *http.Cookie
+		body         any
+		setup        func()
+		wantStatus   int
+		wantResponse string
+	}{
+		{
+			name:         "invalid method",
+			method:       http.MethodGet,
+			cookie:       nil,
+			body:         nil,
+			wantStatus:   http.StatusMethodNotAllowed,
+			wantResponse: "Only POST method is allowed\n",
+		},
+		{
+			name:         "missing cookie",
+			method:       http.MethodPost,
+			cookie:       nil,
+			body:         nil,
+			wantStatus:   http.StatusUnauthorized,
+			wantResponse: "Unauthorized\n",
+		},
+		{
+			name:   "non-existent user",
+			method: http.MethodPost,
+			cookie: &http.Cookie{Name: "auth-cookie", Value: "nonexistent"},
+			body: struct {
+				NewPassword string `json:"newPassword"`
+			}{
+				NewPassword: "newpassword",
+			},
+			wantStatus:   http.StatusNotFound,
+			wantResponse: "User does not exist\n",
+		},
+		{
+			name:         "invalid JSON payload",
+			method:       http.MethodPost,
+			cookie:       &http.Cookie{Name: "auth-cookie", Value: "testuser"},
+			body:         "invalid-json",
+			wantStatus:   http.StatusBadRequest,
+			wantResponse: "Invalid request body\n",
+		},
+		{
+			name:   "successful password update",
+			method: http.MethodPost,
+			cookie: &http.Cookie{Name: "auth-cookie", Value: "testuser"},
+			body: struct {
+				NewPassword string `json:"newPassword"`
+			}{
+				NewPassword: "newsecurepassword",
+			},
+			wantStatus:   http.StatusAccepted,
+			wantResponse: "User req updated successfully",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
+
+			var reqBody []byte
+			if tt.body != nil {
+				reqBody, _ = json.Marshal(tt.body)
+			}
+
+			req := httptest.NewRequest(tt.method, "/password-update", bytes.NewReader(reqBody))
+			if tt.cookie != nil {
+				req.AddCookie(tt.cookie)
+			}
+			if tt.method == http.MethodPost {
+				req.Header.Set("Content-Type", "application/json")
+			}
+
+			rec := httptest.NewRecorder()
+			handler.PasswordUpdateHandler(rec, req)
+
+			res := rec.Result()
+			defer res.Body.Close()
+
+			if res.StatusCode != tt.wantStatus {
+				t.Errorf("got status %v, want %v", res.StatusCode, tt.wantStatus)
+			}
+
+			respBody := rec.Body.String()
+			if respBody != tt.wantResponse {
+				t.Errorf("got response body %q, want %q", respBody, tt.wantResponse)
+			}
+		})
+	}
+}
