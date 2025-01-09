@@ -80,6 +80,7 @@ func (handler UserAwareHandler) RegisterHandler(w http.ResponseWriter, r *http.R
 	w.Write([]byte("User registered successfully"))
 }
 
+// PasswordUpdateHandler handles password update requests, validates the session, and updates the password for authenticated users.
 func (handler UserAwareHandler) PasswordUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
