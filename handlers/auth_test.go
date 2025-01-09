@@ -129,7 +129,7 @@ func TestRegisterHandler(t *testing.T) {
 			wantStatus:   http.StatusCreated,
 			wantResponse: "User registered successfully",
 		},
-		{ // TODO: ensure this doesn't change an existing user's password
+		{
 			name:   "duplicate user registration",
 			method: http.MethodPost,
 			body:   models.Credentials{Username: "existinguser", Password: "password123"},
@@ -140,8 +140,8 @@ func TestRegisterHandler(t *testing.T) {
 					PasswordHash: passwordHash,
 				})
 			},
-			wantStatus:   http.StatusInternalServerError,
-			wantResponse: "Error hashing password\n",
+			wantStatus:   http.StatusBadRequest,
+			wantResponse: "Username already exists\n",
 		},
 	}
 
